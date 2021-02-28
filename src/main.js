@@ -11,8 +11,6 @@ const store = new Vuex.Store(storeDefinition)
 
 // Validation component
 import ValidationErrors from "./components/shared/ValidationErrors"
-import Pagination from "./components/shared/Pagination"
-Vue.component('Pagination', Pagination)
 Vue.component("v-errors", ValidationErrors)
 
 import swal from 'sweetalert2'

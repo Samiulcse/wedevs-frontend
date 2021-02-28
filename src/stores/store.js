@@ -6,7 +6,7 @@ export default {
     state: {
         user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null,
         currentUser: localStorage.getItem('currentUser') ? JSON.parse(localStorage.getItem('currentUser')) : null,
-        paginateData: {},
+        allProduct: [],
     },
     mutations: {
         setUser(state, payload) {
@@ -15,8 +15,8 @@ export default {
         setCurrentUser(state, payload) {
             state.currentUser = payload
         },
-        getPaginateData(state, paginateData) {
-            state.paginateData = paginateData
+        setAllProduct(state, allProduct) {
+            state.allProduct = allProduct
         }, 
     },
     actions: {
@@ -64,10 +64,31 @@ export default {
             localStorage.removeItem('currentUser')
             axios.defaults.headers.common['Authorization'] = null
         },
+        async getAllProduct(context, payload) {
+            const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null
+            axios.defaults.headers.common['Authorization'] = `Bearer ${user.token}`
+            axios.get(baseUrl+'/products', payload).then((response) => {
+                context.commit('setAllProduct', response.data.data)
+            }).catch(() => {
+                
+            }) 
+        },
+        deleteProduct(context, payload) {
+            const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null
+            axios.defaults.headers.common['Authorization'] = `Bearer ${user.token}`
+            axios.delete(baseUrl+'/products/'+payload).then((response) => {
+                let resProduct = response.data.data
+                let allProduct = context.state.allProduct
+                allProduct = allProduct.filter(product => product.id != resProduct.id )
+                context.commit('setAllProduct', allProduct)
+            }).catch(() => {
+                
+            }) 
+        },
     },
     getters: {
         getUser: (state) => state.user,
         getCurrentUser: (state) => state.currentUser,
-        paginateData:(state) => state.paginateData
+        getAllProduct:(state) => state.allProduct,
     },
 }
