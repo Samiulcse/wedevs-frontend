@@ -60,6 +60,7 @@ export default {
         logout(context) {
             context.commit('setUser', null)
             context.commit('setCurrentUser', null)
+            context.commit('setAllProduct', [])
             localStorage.removeItem('user')
             localStorage.removeItem('currentUser')
             axios.defaults.headers.common['Authorization'] = null
@@ -80,6 +81,34 @@ export default {
                 let resProduct = response.data.data
                 let allProduct = context.state.allProduct
                 allProduct = allProduct.filter(product => product.id != resProduct.id )
+                context.commit('setAllProduct', allProduct)
+            }).catch(() => {
+                
+            }) 
+        },
+        updateProduct(context, payload) {
+            const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null
+            axios.defaults.headers.common['Authorization'] = `Bearer ${user.token}`
+            axios.put(baseUrl+'/products/'+ payload.id , payload).then((response) => {
+                let resProduct = response.data.data
+                let allProduct = context.state.allProduct
+                let foundIndex = allProduct.findIndex(product => product.id == resProduct.id )
+                if(foundIndex > -1){
+                    allProduct[foundIndex] = resProduct
+                    console.log(allProduct[foundIndex] , resProduct)
+                    context.commit('setAllProduct', allProduct)
+                }
+            }).catch(() => {
+                
+            }) 
+        },
+        saveProduct(context, payload) {
+            const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null
+            axios.defaults.headers.common['Authorization'] = `Bearer ${user.token}`
+            axios.post(baseUrl+'/products/', payload).then((response) => {
+                let resProduct = response.data.data
+                let allProduct = context.state.allProduct
+                allProduct.push(resProduct)
                 context.commit('setAllProduct', allProduct)
             }).catch(() => {
                 

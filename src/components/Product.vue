@@ -1,7 +1,7 @@
 <template>
     <div class="row">
         <div class="col-md-12 mt-5">
-            <button type="button" class="btn btn-primary" @click="clearFormData">Add Product</button>
+            <button type="button" class="btn btn-primary" @click="openAddProduct">Add Product</button>
             <div v-if="showModal">
             <transition name="modal">
                 <div class="modal-mask">
@@ -31,15 +31,15 @@
                                             <input type="file" class="form-control" id="image" accept="image/x-png,image/gif,image/jpeg" @change="onFileChange" >
                                         </div>
                                         <div class="mb-3">
-                                            <label for="image" class="col-form-label">Preview:</label>
+                                            <label class="col-form-label">Preview:</label>
                                             <img :src="currentImage ? currentImage : (form.image ? imagePath + form.image : '')" height="100px" width="100px"/>
                                         </div>
                                     </form>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" @click="showModal = false">Close</button>
-                                    <button type="button" class="btn btn-primary" v-if="form.id">Update Product</button>
-                                    <button type="button" class="btn btn-primary" v-else>Save Product</button>
+                                    <button type="button" class="btn btn-primary" v-if="form.id" @click="updateProduct()">Update Product</button>
+                                    <button type="button" class="btn btn-primary" v-else @click="saveProduct()">Save Product</button>
                                 </div>
                             </div>
                         </div>
@@ -62,7 +62,7 @@
                 </thead>
                 <tbody v-if="allProduct">
                     <tr v-for="(product, productIndex) in allProduct" :key="productIndex">
-                        <td>{{ product.id }}</td>
+                        <td>{{ productIndex+1 }}</td>
                         <td>{{ product.title }}</td>
                         <td>{{ product.description }}</td>
                         <td>{{ product.price }}</td>
@@ -83,6 +83,7 @@
 import mixin from '../mixins/mixin'
 import * as common from "../helpers/commonHelper"
 import {mapGetters} from "vuex"
+// import $ from "jquery"
 
 export default {
     name: 'products',
@@ -106,8 +107,8 @@ export default {
             allProduct: 'getAllProduct',
         })
     },
-    async mounted() { 
-        await this.$store.dispatch('getAllProduct')
+    mounted() { 
+        this.$store.dispatch('getAllProduct')
     },
     methods:{
         clearFormData(){
@@ -119,12 +120,37 @@ export default {
                 'id': null,
             }
             this.currentImage= null
+        },
+        openAddProduct(){
+            this.clearFormData()
             this.showModal = true
         },
         async deleteProduct(id){
             if (await this.takeConfirmation() !== false) {
                 this.$store.dispatch('deleteProduct', id)
             }
+        },
+        async updateProduct(){
+            if(this.currentImage){
+                this.form.image = this.currentImage
+            }
+            await this.$store.dispatch('updateProduct', this.form)
+            .then(() => {
+                this.$store.dispatch('getAllProduct')
+                this.showModal = false
+                this.clearFormData()
+            })
+        },
+        async saveProduct(){
+            if(this.currentImage){
+                this.form.image = this.currentImage
+            }
+            await this.$store.dispatch('saveProduct', this.form)
+            .then(() => {
+                this.$store.dispatch('getAllProduct')
+                this.showModal = false
+                this.clearFormData()
+            })
         },
         async editProduct(id){
             let selectedProduct = this.allProduct.find(product => product.id == id)
@@ -133,7 +159,6 @@ export default {
         },
         onFileChange(e) {
             const reader = new FileReader()
-            console.log(e.target.files[0])
             reader.readAsDataURL(e.target.files[0])
             reader.onload = e => {
                 this.currentImage = e.target.result
